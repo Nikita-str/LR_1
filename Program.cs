@@ -32,6 +32,13 @@ namespace LR_1
         Console.WriteLine();
         }
 
+      Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
+
+      foreach(var x in G.GetWithLeft(new Chain<CharSymbol>(new List<CharSymbol>() { 'Z' }))) Console.WriteLine(x);
+      Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
+
+      G.Closure(new HashSet<ClosureElem<CharSymbol>>() { new ClosureElem<CharSymbol>() });
+
       Console.ReadKey();
       }
     }

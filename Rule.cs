@@ -10,7 +10,7 @@ namespace LR_1
     Right
     }
 
-  class Rule<S> where S : Symbol<S>
+  class Rule<S> where S : Symbol<S>, new()
     {
     private Chain<S> left;
     private Chain<S> right;
@@ -31,10 +31,37 @@ namespace LR_1
       this.right = new Chain<S>(right, take_owning);
       }
 
+    public Rule(Chain<S> left, Chain<S> right, bool take_owning = true)
+      {
+      if(take_owning)
+        {
+        this.left = left;
+        this.right = right;
+        }
+      else
+        {
+        this.left = new Chain<S>(left);
+        this.right = new Chain<S>(right); 
+        }
+      }
+
     public Rule(Rule<S> copy)
       {
       left = new Chain<S>(copy.left);
       right = new Chain<S>(copy.right);
+      }
+
+    static private readonly List<RulePart> rule_parts = new List<RulePart>() { RulePart.Left, RulePart.Right };
+    public override bool Equals(object obj)
+      {
+      if(obj is Rule<S> y)
+        {
+        var x = this;
+        foreach(var cur_part in rule_parts)
+          if(!x.GetRulePart(cur_part).Equals(y.GetRulePart(cur_part))) return false; 
+        return true;
+        }
+      return false;
       }
 
     public override int GetHashCode()
@@ -44,32 +71,27 @@ namespace LR_1
       ret ^= right.GetHashCode(4);
       return ret;
       }
+
+    public override string ToString() => left + " -> " + right;
     }
 
-  class RuleComparer<S> : IEqualityComparer<Rule<S>> where S : Symbol<S>
+  class RuleComparer<S> : IEqualityComparer<Rule<S>> where S : Symbol<S>, new()
     {
-    IEqualityComparer<S> symbol_comparator;
+    public ChainComparer<S> chain_comparer;
     public RuleComparer(IEqualityComparer<S> s_comparator)
       {
-      symbol_comparator = s_comparator;
-      if(symbol_comparator == null) symbol_comparator = EqualityComparer<S>.Default;
+      if(s_comparator == null) s_comparator = EqualityComparer<S>.Default;
+      chain_comparer = new ChainComparer<S>(s_comparator);
       }
 
     static private readonly List<RulePart> rule_parts = new List<RulePart>() { RulePart.Left, RulePart.Right };
     public bool Equals(Rule<S> x, Rule<S> y)
       {
       foreach(var cur_part in rule_parts)
-        { if(x.GetRuleLen(cur_part) != y.GetRuleLen(cur_part)) return false; }
-
-      foreach(var cur_part in rule_parts)
-        {
-        var len = x.GetRuleLen(cur_part);
-        for(int i = 0; i < len; i++)
-          if(!symbol_comparator.Equals(x.GetSymbol(RulePart.Left, i), y.GetSymbol(RulePart.Left, i))) return false;
-        }
+          if(!chain_comparer.Equals(x.GetRulePart(cur_part), y.GetRulePart(cur_part))) return false;
       return true;
       }
-
+    
     public int GetHashCode(Rule<S> obj) => obj.GetHashCode();
     }
 

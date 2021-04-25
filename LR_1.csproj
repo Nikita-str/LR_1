@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Chain.cs" />
+    <Compile Include="ClosureElem.cs" />
     <Compile Include="Grammar.cs" />
     <Compile Include="Impls\CharSymbol.cs" />
     <Compile Include="Program.cs" />

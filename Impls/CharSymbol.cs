@@ -11,6 +11,7 @@ namespace LR_1.Impls
     public char Value { get; protected set; }
     public CharSymbol(char c) { Value = c; }
 
+    public CharSymbol() => Value = EpsilonChar;
     public override object Clone() { return new CharSymbol(Value); }
 
     public override CharSymbol GenerateNew(IEnumerable<CharSymbol> already_used, SymbolType wanted_type, Base_GenSymbolInfo gen_symb_info = null)
@@ -78,6 +79,6 @@ namespace LR_1.Impls
 
     public static implicit operator CharSymbol(char c) { return new CharSymbol(c); }
 
-    public override string ToString() => "" + Value;
+    public override string ToString() => (Value == EpsilonChar) ? "_eps_" : "" + Value;
     }
   }
