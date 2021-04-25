@@ -24,7 +24,7 @@ namespace LR_1
 
     public static SelfType Epsilon => ForStaticCall.GenerateNew(null, SymbolType.Epsilon);
     
-    /// <summary>Are you sure that you want to do that?</summary>
+    /// <summary>for special symbol</summary>
     public static SelfType GenerateNewTerminal(List<SelfType> already_used, Base_GenSymbolInfo gen_symb_info)
       => ForStaticCall.GenerateNew(already_used, SymbolType.Terminal, gen_symb_info);
     public static SelfType GenerateNewNotTerminal(List<SelfType> already_used, Base_GenSymbolInfo gen_symb_info)
@@ -38,7 +38,7 @@ namespace LR_1
 
 
     public static SelfType GetSpecialSymbol(int special_id) => ForStaticCall.GetSpecial(special_id);
-    /// <summary>return special NotTerminal symbol. 
+    /// <summary>return special Terminal symbol. 
     /// <br/>may panic if type has limited amount of special symbols
     /// <br/>please not panic at id = 0, 1, 2
     /// <br/>also(as GenerateNew) must be valid for new().GenSpecial() i.e. must be static</summary>

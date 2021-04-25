@@ -12,6 +12,10 @@ namespace LR_1
 
     HashSet<Rule<S>> rules;
 
+    int id = 0;
+    int next_id { get => id++; }
+    Dictionary<Rule<S>, int> rules_id = new Dictionary<Rule<S>, int>();
+
     /// <summary>Terminal symbols</summary>
     HashSet<S> T;
     /// <summary>Not terminal symbols</summary>
@@ -42,6 +46,7 @@ namespace LR_1
       rule_comparator = new RuleComparer<S>(s_comparator);
       rules = new HashSet<Rule<S>>(rule_comparator);
       T = new HashSet<S>(symbol_comparator);
+      T.Add(EndSymbol);
       N = new HashSet<S>(symbol_comparator);
       }
 
@@ -62,6 +67,7 @@ namespace LR_1
     public bool AddRule(Rule<S> rule)
       {
       if(!rules.Add(rule)) return false;
+      rules_id.Add(rule, next_id);
       if(rule.GetRuleLen(RulePart.Left) != 1) amount_not_CF_left++;
       if(!rule.GetSymbol(RulePart.Left, 0).isNotTerminal) amount_not_CF_left++;
       AddTerminal(rule);
@@ -137,16 +143,19 @@ namespace LR_1
       }
 
 
-    public struct ItemsReturn
+    public class ItemsReturn
       {
       /// <summary> [Key: (from, to); Value: by symbol] </summary>
       public Dictionary<(int, int), S> transitions;
       public List<HashSet<ClosureElem<S>>> items;
+      public Dictionary<S, int> all_NT_symbols;
 
-      public ItemsReturn(List<HashSet<ClosureElem<S>>> _items, Dictionary<(int, int), S> _transitions)
+      public ItemsReturn(List<HashSet<ClosureElem<S>>> _items, Dictionary<(int, int), S> _transitions, List<S> all_NT)
         {
         items = _items;
         transitions = _transitions;
+        all_NT_symbols = new Dictionary<S, int>();
+        for(int i = 0; i < all_NT.Count; i++) all_NT_symbols.Add(all_NT[i], i);
         }
 
       public void PrintTransitions(int tab_sz = 3)
@@ -167,7 +176,55 @@ namespace LR_1
             Console.WriteLine(tab + closure);
           }
         }
+
+      public void PrintGotoTable()
+        {
+        int symbols = all_NT_symbols.Count;
+
+        Console.WriteLine("GOTO:");
+        int max_len = 3;
+        Dictionary<int, string> nt_strings = new Dictionary<int, string>();
+        foreach(var c in all_NT_symbols)
+          {
+          var cur = c.Key.ToString();
+          nt_strings.Add(c.Value, cur);
+          if(max_len < cur.Length) max_len = cur.Length;
+          }
+        
+        var len_cell = max_len + 2; 
+        Console.Write(new string(' ', len_cell) + "|");
+        for(int i = 0; i < symbols; i++) Console.Write(" " + nt_strings[i].PadRight(len_cell - 1) + "|");
+        Console.WriteLine();
+
+        var table = new int[items.Count, symbols];
+        foreach(var x in transitions)
+          if(x.Value.isNotTerminal)table[x.Key.Item1, all_NT_symbols[x.Value]] = x.Key.Item2 + 1;
+
+        for(int i = 0; i < items.Count; i++)
+          {
+          Console.Write((" "+i).PadRight(len_cell) + "|");
+          for(int j = 0; j < symbols; j++) Console.Write( " " + ( table[i, j] == 0 ? "" : ""+(table[i,j] - 1) ).PadRight(len_cell - 1) + "|");
+          Console.WriteLine();
+          }
+        }
       }
+
+    public class GotoTable
+      {
+      public ItemsReturn closure_keeper;
+      public List<S> all_NT_symbols;
+      public Dictionary<(int, S), int> table;
+      public GotoTable(ItemsReturn parent, List<S> all_NT)
+        {
+        foreach(var x in parent.transitions)
+          {
+
+          }
+        }
+
+      }
+
+    static readonly Exception EXC_NotNormalized = new ArgumentException("self must be adding with S'->S where S is preious start subol and S' new");
 
     /// <summary>Grammar must be already added with S'->S where S is previos start symbol</summary>
     /// <returns></returns>
@@ -175,8 +232,9 @@ namespace LR_1
       {
       #region check valid of grammar
       var must_have_len_eq_1 = GetWithLeft(StartSymbol);
-      if(must_have_len_eq_1.Count() != 1) throw new ArgumentException("self must be adding with S'->S where S is preious start subol and S' new");
+      if(must_have_len_eq_1.Count() != 1) throw EXC_NotNormalized;
       var start_rule = must_have_len_eq_1.First();
+      if(start_rule.GetRuleLen(RulePart.Left) != 1 || start_rule.GetRuleLen(RulePart.Right) != 1) throw EXC_NotNormalized;
       #endregion check...
 
       var I_0 = Closure(new HashSet<ClosureElem<S>>() { new ClosureElem<S>(start_rule, 0, EndSymbol, symbol_comparator) });
@@ -239,7 +297,13 @@ namespace LR_1
         if(items.Count == last_len) break;
         }
 
-      return new ItemsReturn(items, transitions);
+      #region create goto table
+      var all_N = N.ToList();
+      all_N.Remove(StartSymbol); // S' is additional and not initially
+      if(comparer_for_sort != null) all_N.Sort(comparer_for_sort);
+      #endregion
+
+      return new ItemsReturn(items, transitions, all_N);
       }
 
     }

@@ -8,6 +8,7 @@ namespace LR_1.Impls
     {
     static readonly char EpsilonChar = '~';
     static readonly List<char> OtherT = new List<char>() { '+', '=', '-', '(', ')' };
+    static readonly List<char> SpecialT = new List<char>() { '$', '#', '&', '.'};
     public char Value { get; protected set; }
     public CharSymbol(char c) { Value = c; }
 
@@ -21,6 +22,15 @@ namespace LR_1.Impls
         case SymbolType.Epsilon: return new CharSymbol(EpsilonChar);
         case SymbolType.Terminal:
           {
+          if(gen_symb_info != null && gen_symb_info is StdGenSymbolInfo std && std.is_special_symbol)
+            {
+            foreach(var x in SpecialT)
+              {
+              CharSymbol cs = new CharSymbol(x); 
+              if(!already_used.Contains(cs)) return cs;
+              }
+            throw new NotImplementedException("cant create not used symbol");
+            }
           var letters_amount = 'z' - 'a' + 1;
           var eng_letters = new bool[letters_amount];
           var digits_amount = '9' - '0' + 1;
@@ -36,20 +46,6 @@ namespace LR_1.Impls
           }
         case SymbolType.NotTerminal:
           {
-          if(gen_symb_info != null && gen_symb_info is StdGenSymbolInfo std && std.is_special_symbol)
-            {
-            CharSymbol cs = null;
-            cs = new CharSymbol('$');
-            if(!already_used.Contains(cs)) return cs;
-            cs = new CharSymbol('#');
-            if(!already_used.Contains(cs)) return cs;
-            cs = new CharSymbol('%');
-            if(!already_used.Contains(cs)) return cs;
-            cs = new CharSymbol('.');
-            if(!already_used.Contains(cs)) return cs;
-            throw new NotImplementedException("cant create not used symbol");
-            }
-
           var letters_amount = 'Z' - 'A' + 1;
           var eng_letters = new bool[letters_amount];
           foreach(var x in already_used)
@@ -67,7 +63,7 @@ namespace LR_1.Impls
     public override SymbolType GetSymbolType()
       {
       if(Value == EpsilonChar) return SymbolType.Epsilon;
-      if(char.IsDigit(Value) || char.IsLower(Value) || OtherT.Contains(Value)) return SymbolType.Terminal;
+      if(char.IsDigit(Value) || char.IsLower(Value) || OtherT.Contains(Value) || SpecialT.Contains(Value)) return SymbolType.Terminal;
       return SymbolType.NotTerminal;
       }
 
@@ -83,16 +79,11 @@ namespace LR_1.Impls
 
     public override string ToString() => (Value == EpsilonChar) ? "_eps_" : "" + Value;
 
+
     public override CharSymbol GetSpecial(int special_id)
       {
-      switch(special_id)
-        {
-        case 0: return new CharSymbol('$');
-        case 1: return new CharSymbol('#');
-        case 2: return new CharSymbol('%');
-        case 3: return new CharSymbol('.');
-        default: throw new ArgumentException("that type has only 4 special symbols: {$, #, ., %}");
-        }
+      if(special_id < SpecialT.Count)return new CharSymbol(SpecialT[special_id]);
+      throw new ArgumentException("that type has only "+ SpecialT.Count + " special symbols"); 
       }
     }
   }

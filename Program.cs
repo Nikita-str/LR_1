@@ -51,12 +51,25 @@ namespace LR_1
       Console.WriteLine("is: ");
       foreach(var x in res_closure) Console.WriteLine(x);
       Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
-      
-      var items = G.Items();
+
+      Comparison<CharSymbol> items_comparision = (xc, yc) =>
+        {
+          var x = xc.Value;
+          var y = yc.Value;
+          if(x == y) return 0;
+          bool x_up = char.IsUpper(x);
+          bool y_up = char.IsUpper(y);
+          if(x == 'S' || (x_up && !y_up) || y == '$') return -1;
+          if(y == 'S' || (y_up && !x_up) || x == '$') return 1;
+          return x - y;
+        };
+      var items = G.Items(items_comparision);
       Console.WriteLine("Transitions:");
       items.PrintTransitions();
       Console.WriteLine("\nItems:");
       items.PrintItems();
+      items.PrintGotoTable();
+      //TODO: special symbols are Terminal ... 
 
       Console.ReadKey();
       }
