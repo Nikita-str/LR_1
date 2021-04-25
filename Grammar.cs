@@ -136,30 +136,68 @@ namespace LR_1
       return Closure(for_ret);
       }
 
+
+    public struct ItemsReturn
+      {
+      /// <summary> [Key: (from, to); Value: by symbol] </summary>
+      public Dictionary<(int, int), S> transitions;
+      public List<HashSet<ClosureElem<S>>> items;
+
+      public ItemsReturn(List<HashSet<ClosureElem<S>>> _items, Dictionary<(int, int), S> _transitions)
+        {
+        items = _items;
+        transitions = _transitions;
+        }
+
+      public void PrintTransitions(int tab_sz = 3)
+        {
+        string tab = new string(' ', tab_sz);
+        foreach(var x in transitions)
+          Console.WriteLine(tab + "I[" + x.Key.Item1 + "]  -> (by " + x.Value + ") -> " + "I[" + x.Key.Item2 + "]");
+        }
+
+      public void PrintItems(int tab_sz = 3)
+        {
+        string tab = new string(' ', tab_sz);
+        int index = 0; 
+        foreach(var I in items)
+          {
+          Console.WriteLine("I[" + index++ + "]: ");
+          foreach(var closure in I)
+            Console.WriteLine(tab + closure);
+          }
+        }
+      }
+
     /// <summary>Grammar must be already added with S'->S where S is previos start symbol</summary>
     /// <returns></returns>
-    public List<HashSet<ClosureElem<S>>> Items()
+    public ItemsReturn Items(Comparison<S> comparer_for_sort = null)
       {
+      #region check valid of grammar
       var must_have_len_eq_1 = GetWithLeft(StartSymbol);
       if(must_have_len_eq_1.Count() != 1) throw new ArgumentException("self must be adding with S'->S where S is preious start subol and S' new");
       var start_rule = must_have_len_eq_1.First();
+      #endregion check...
+
       var I_0 = Closure(new HashSet<ClosureElem<S>>() { new ClosureElem<S>(start_rule, 0, EndSymbol, symbol_comparator) });
 
-      var all_grammar_symbol = GetAllGrammarSymbol();
-      all_grammar_symbol.Remove(StartSymbol); // S' is additional not initially
+      #region get all symbol in grammar and sort them
+      var hashmap__all_grammar_symbol = GetAllGrammarSymbol();
+      hashmap__all_grammar_symbol.Remove(StartSymbol); // S' is additional not initially
+      var all_grammar_symbol = hashmap__all_grammar_symbol.ToList();
+      if(comparer_for_sort != null) all_grammar_symbol.Sort(comparer_for_sort);
+      #endregion get all ...
 
-      //TODO: sort all_grammar_symbol
-
-      var state = new Dictionary<(int, int), S>() { };// <(from, to), by symbol> 
-      var ret = new List<HashSet<ClosureElem<S>>>() { I_0 };
-
+      var transitions = new Dictionary<(int, int), S>() { };// <(from, to), by symbol> 
+      var items = new List<HashSet<ClosureElem<S>>>() { I_0 };
+      
       while(true)
         {
-        int last_len = ret.Count;
+        int last_len = items.Count;
         var added = new List<HashSet<ClosureElem<S>>>();
         for(int i = 0; i < last_len; i++)
           {
-          var I = ret[i];
+          var I = items[i];
           foreach(var X in all_grammar_symbol)
             {
             var added_I = Goto(I, X);
@@ -167,10 +205,10 @@ namespace LR_1
               {
               bool add = true;
 
-              #region oh.. no... check that added_I not contain in ret
+              #region oh.. no... check that added_I not contain in ret + add transition between both existing I
               for(int exist_i = 0; exist_i < last_len; exist_i++)
                 {
-                var exist_I = ret[exist_i];
+                var exist_I = items[exist_i];
                 bool is_eq = true;
                 foreach(var item in exist_I)
                   {
@@ -180,8 +218,8 @@ namespace LR_1
                 if(is_eq)
                   {
                   var from_to = (i, exist_i);
-                  if(state.ContainsKey(from_to)) {if(!symbol_comparator.Equals(state[from_to], X)) throw new Exception("... blin");}
-                  else state.Add(from_to, X); // from: I[i] to I[last_len + added.Count] by X-symbol
+                  if(transitions.ContainsKey(from_to)) {if(!symbol_comparator.Equals(transitions[from_to], X)) throw new Exception("... blin");}
+                  else transitions.Add(from_to, X); // from: I[i] to I[last_len + added.Count] by X-symbol
                   add = false;
                   }
                 if(!add) break;
@@ -190,23 +228,18 @@ namespace LR_1
 
               if(add)
                 {
-                state.Add((i, last_len + added.Count), X); // from: I[i] to I[last_len + added.Count] by X-symbol
+                transitions.Add((i, last_len + added.Count), X); // from: I[i] to I[last_len + added.Count] by X-symbol
                 added.Add(added_I);
                 }
               }
             }
           }
 
-        ret.AddRange(added);
-        if(ret.Count == last_len) break;
+        items.AddRange(added);
+        if(items.Count == last_len) break;
         }
 
-      Console.WriteLine("states: ");
-      foreach(var x in state)
-        Console.WriteLine("I[" + x.Key.Item1 + "]  -> (by " + x.Value + ") -> " + "I[" + x.Key.Item2 + "]");
-      Console.WriteLine();
-
-      return ret;
+      return new ItemsReturn(items, transitions);
       }
 
     }

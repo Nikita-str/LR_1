@@ -51,15 +51,13 @@ namespace LR_1
       Console.WriteLine("is: ");
       foreach(var x in res_closure) Console.WriteLine(x);
       Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
-      var items = G.Items();
-      int index = 0;
-      foreach(var I in items)
-        {
-        Console.WriteLine("I_" + index++ +": ");
-        foreach(var closure in I)
-          Console.WriteLine("   " + closure);
-        }
       
+      var items = G.Items();
+      Console.WriteLine("Transitions:");
+      items.PrintTransitions();
+      Console.WriteLine("\nItems:");
+      items.PrintItems();
+
       Console.ReadKey();
       }
     }
