@@ -45,7 +45,8 @@ namespace LR_1
 
       var first_closure = new ClosureElem<CharSymbol>(G.GetWithLeft((CharSymbol)'Z').First(), 0, G.EndSymbol, G.symbol_comparator);
       Console.WriteLine("closure for: " + first_closure);
-      var res_closure = G.Closure(new HashSet<ClosureElem<CharSymbol>>() { first_closure });
+      var set = new HashSet<ClosureElem<CharSymbol>>() { first_closure };
+      var res_closure = G.Closure(set);
       Console.WriteLine("is: ");
       foreach(var x in res_closure) Console.WriteLine(x);
 

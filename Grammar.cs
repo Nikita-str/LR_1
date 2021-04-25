@@ -94,8 +94,9 @@ namespace LR_1
 
     public IEnumerable<Rule<S>> GetWithLeft(Chain<S> chain) => rules.Where(x => chain_comparator.Equals(chain, x.GetRulePart(RulePart.Left)));
 
-    public HashSet<ClosureElem<S>> Closure(HashSet<ClosureElem<S>> items)
+    public HashSet<ClosureElem<S>> Closure(HashSet<ClosureElem<S>> items, bool can_change_items = true)
       {
+      if(!can_change_items) items = new HashSet<ClosureElem<S>>(items);
       while(true)
         {
         var items_clone = new HashSet<ClosureElem<S>>(items);
@@ -110,6 +111,11 @@ namespace LR_1
         if(items_clone.Count == items.Count) break;
         }
       return items; 
+      }
+
+    public HashSet<ClosureElem<S>> Goto(HashSet<ClosureElem<S>> items, Symbol<S> symbol)
+      {
+      throw new Exception();
       }
 
     }
