@@ -148,12 +148,18 @@ namespace LR_1
       var all_grammar_symbol = GetAllGrammarSymbol();
       all_grammar_symbol.Remove(StartSymbol); // S' is additional not initially
 
+      //TODO: sort all_grammar_symbol
+
+      var state = new Dictionary<(int, int), S>() { };// <(from, to), by symbol> 
       var ret = new List<HashSet<ClosureElem<S>>>() { I_0 };
+
       while(true)
         {
         int last_len = ret.Count;
         var added = new List<HashSet<ClosureElem<S>>>();
-        foreach(var I in ret)
+        for(int i = 0; i < last_len; i++)
+          {
+          var I = ret[i];
           foreach(var X in all_grammar_symbol)
             {
             var added_I = Goto(I, X);
@@ -162,25 +168,44 @@ namespace LR_1
               bool add = true;
 
               #region oh.. no... check that added_I not contain in ret
-              foreach(var exist_I in ret)
+              for(int exist_i = 0; exist_i < last_len; exist_i++)
                 {
+                var exist_I = ret[exist_i];
                 bool is_eq = true;
                 foreach(var item in exist_I)
                   {
                   if(!added_I.Contains(item)) is_eq = false;
                   if(is_eq) break;
                   }
-                if(is_eq) add = false;
+                if(is_eq)
+                  {
+                  var from_to = (i, exist_i);
+                  if(state.ContainsKey(from_to)) {if(!symbol_comparator.Equals(state[from_to], X)) throw new Exception("... blin");}
+                  else state.Add(from_to, X); // from: I[i] to I[last_len + added.Count] by X-symbol
+                  add = false;
+                  }
                 if(!add) break;
                 }
-              #endregion
-              if(add) added.Add(added_I);
+              #endregion oh.. no... ...
+
+              if(add)
+                {
+                state.Add((i, last_len + added.Count), X); // from: I[i] to I[last_len + added.Count] by X-symbol
+                added.Add(added_I);
+                }
               }
             }
+          }
 
         ret.AddRange(added);
         if(ret.Count == last_len) break;
         }
+
+      Console.WriteLine("states: ");
+      foreach(var x in state)
+        Console.WriteLine("I[" + x.Key.Item1 + "]  -> (by " + x.Value + ") -> " + "I[" + x.Key.Item2 + "]");
+      Console.WriteLine();
+
       return ret;
       }
 
