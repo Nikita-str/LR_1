@@ -40,6 +40,8 @@ namespace LR_1
     /// <summary>return beta from [alpha . B beta; symbol]</summary>
     public Chain<S> SymbolsAfterFirstAfterPoint { get => rule.GetRulePart(RulePart.Right).SubChain(position + 1); }
 
+    public override int GetHashCode() => (rule.GetHashCode() + position * 17) ^ (symbol.GetHashCode() << 1);
+
     public override string ToString() 
       => "[" + rule.GetRulePart(RulePart.Left) + " -> " + rule.GetRulePart(RulePart.Right).ToString().Insert(position, ".") + "; " + symbol + "]";
     }

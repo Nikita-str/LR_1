@@ -35,6 +35,15 @@ namespace LR_1
     /// in other words: must be static
     /// </summary>
     public abstract SelfType GenerateNew(IEnumerable<SelfType> already_used, SymbolType wanted_type, Base_GenSymbolInfo gen_symb_info = null);
+
+
+    public static SelfType GetSpecialSymbol(int special_id) => ForStaticCall.GetSpecial(special_id);
+    /// <summary>return special NotTerminal symbol. 
+    /// <br/>may panic if type has limited amount of special symbols
+    /// <br/>please not panic at id = 0, 1, 2
+    /// <br/>also(as GenerateNew) must be valid for new().GenSpecial() i.e. must be static</summary>
+    /// <param name="special_id">special symbol id</param>
+    public abstract SelfType GetSpecial(int special_id);
     abstract public object Clone();
     }
   }

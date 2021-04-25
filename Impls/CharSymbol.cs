@@ -39,9 +39,11 @@ namespace LR_1.Impls
           if(gen_symb_info != null && gen_symb_info is StdGenSymbolInfo std && std.is_special_symbol)
             {
             CharSymbol cs = null;
+            cs = new CharSymbol('$');
+            if(!already_used.Contains(cs)) return cs;
             cs = new CharSymbol('#');
             if(!already_used.Contains(cs)) return cs;
-            cs = new CharSymbol('$');
+            cs = new CharSymbol('%');
             if(!already_used.Contains(cs)) return cs;
             cs = new CharSymbol('.');
             if(!already_used.Contains(cs)) return cs;
@@ -80,5 +82,17 @@ namespace LR_1.Impls
     public static implicit operator CharSymbol(char c) { return new CharSymbol(c); }
 
     public override string ToString() => (Value == EpsilonChar) ? "_eps_" : "" + Value;
+
+    public override CharSymbol GetSpecial(int special_id)
+      {
+      switch(special_id)
+        {
+        case 0: return new CharSymbol('$');
+        case 1: return new CharSymbol('#');
+        case 2: return new CharSymbol('%');
+        case 3: return new CharSymbol('.');
+        default: throw new ArgumentException("that type has only 4 special symbols: {$, #, ., %}");
+        }
+      }
     }
   }

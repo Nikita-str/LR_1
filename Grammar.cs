@@ -6,9 +6,10 @@ namespace LR_1
   {
   class Grammar<S> where S : Symbol<S>, new()
     {
-    IEqualityComparer<S> symbol_comparator;
-    ChainComparer<S> chain_comparator { get => rule_comparator.chain_comparer; }
-    RuleComparer<S> rule_comparator;
+    public IEqualityComparer<S> symbol_comparator { get => chain_comparator.symbol_comparator;  }
+    public ChainComparer<S> chain_comparator { get => rule_comparator.chain_comparer; }
+    public RuleComparer<S> rule_comparator { get; private set; }
+
     HashSet<Rule<S>> rules;
 
     /// <summary>Terminal symbols</summary>
@@ -17,14 +18,16 @@ namespace LR_1
     HashSet<S> N;
 
     public S StartSymbol { get; set; } = null;
+    /// <summary>special symbol for end of string</summary>
+    public S EndSymbol { get; } = Symbol<S>.GetSpecialSymbol(0);
 
     private int amount_not_CF_left = 0;
     public bool isCF => (amount_not_CF_left == 0);
 
     public Grammar(EqualityComparer<S> s_comparator)
       {
-      symbol_comparator = (s_comparator == null) ? EqualityComparer<S>.Default : s_comparator;
-      rule_comparator = new RuleComparer<S>(symbol_comparator);
+      if (s_comparator == null) s_comparator = EqualityComparer<S>.Default;
+      rule_comparator = new RuleComparer<S>(s_comparator);
       rules = new HashSet<Rule<S>>(rule_comparator);
       T = new HashSet<S>(symbol_comparator);
       N = new HashSet<S>(symbol_comparator);
@@ -76,7 +79,8 @@ namespace LR_1
     public HashSet<S> First(S symbol)
       {
       var ret = new HashSet<S>();
-      if(symbol.isEpsilon | symbol.isTerminal) { ret.Add(symbol.Clone() as S); return ret; }
+      bool is_end = symbol_comparator.Equals(symbol, EndSymbol);
+      if(is_end || symbol.isEpsilon || symbol.isTerminal) { ret.Add(symbol.Clone() as S); return ret; }
 
       if(!symbol.isNotTerminal) throw new NotImplementedException("symbol is not Terminal, NotTerminal and not epsilon, what is it?");
 
@@ -94,8 +98,8 @@ namespace LR_1
       {
       while(true)
         {
-        int len = items.Count;
-        foreach(var closure_elem in items)
+        var items_clone = new HashSet<ClosureElem<S>>(items);
+        foreach(var closure_elem in items_clone)
           {
           foreach(var r in GetWithLeft(closure_elem.SymbolAfterPoint))
             {
@@ -103,9 +107,9 @@ namespace LR_1
             foreach(var b in first) items.Add(new ClosureElem<S>(r, 0, b, symbol_comparator));
             }
           }
-        if(items.Count == len) break;
+        if(items_clone.Count == items.Count) break;
         }
-      return items;
+      return items; 
       }
 
     }

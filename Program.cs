@@ -37,7 +37,17 @@ namespace LR_1
       foreach(var x in G.GetWithLeft(new Chain<CharSymbol>(new List<CharSymbol>() { 'Z' }))) Console.WriteLine(x);
       Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
 
-      G.Closure(new HashSet<ClosureElem<CharSymbol>>() { new ClosureElem<CharSymbol>() });
+      G = new Grammar<CharSymbol>(null);
+      G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'Z' }, new List<CharSymbol>() { 'S' }));
+      G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'S' }, new List<CharSymbol>() { 'A', 'A' }));
+      G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'A' }, new List<CharSymbol>() { 'a', 'A' }));
+      G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'A' }, new List<CharSymbol>() { 'b' }));
+
+      var first_closure = new ClosureElem<CharSymbol>(G.GetWithLeft((CharSymbol)'Z').First(), 0, G.EndSymbol, G.symbol_comparator);
+      Console.WriteLine("closure for: " + first_closure);
+      var res_closure = G.Closure(new HashSet<ClosureElem<CharSymbol>>() { first_closure });
+      Console.WriteLine("is: ");
+      foreach(var x in res_closure) Console.WriteLine(x);
 
       Console.ReadKey();
       }
