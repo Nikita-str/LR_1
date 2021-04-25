@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace LR_1
   {
-  class Grammar<S> where S : Symbol<S>//, new()
+  class Grammar<S> where S : Symbol<S>
     {
     IEqualityComparer<S> symbol_comparator;
     RuleComparer<S> rule_comparator;
@@ -33,14 +33,14 @@ namespace LR_1
     private void AddNotTerminal(IEnumerable<S> from) => N.UnionWith(from.Where(o => o.isNotTerminal));
     private void AddTerminal(Rule<S> r)
       {
-      AddTerminal(r.GetRulePart(RulePart.Left));
-      AddTerminal(r.GetRulePart(RulePart.Right));
+      AddTerminal(r.GetRulePart(RulePart.Left).GetChainSymbols());
+      AddTerminal(r.GetRulePart(RulePart.Right).GetChainSymbols());
       }
 
     private void AddNotTerminal(Rule<S> r)
       {
-      AddNotTerminal(r.GetRulePart(RulePart.Left));
-      AddNotTerminal(r.GetRulePart(RulePart.Right));
+      AddNotTerminal(r.GetRulePart(RulePart.Left).GetChainSymbols());
+      AddNotTerminal(r.GetRulePart(RulePart.Right).GetChainSymbols());
       }
 
     public bool AddRule(Rule<S> rule)
@@ -70,8 +70,8 @@ namespace LR_1
       if(!isCF) throw new NotImplementedException("curently FIRST realised only for CF grammar");
       foreach(var x in rules.Where(r => symbol_comparator.Equals(r.GetSymbol(RulePart.Left, 0), symbol)))
         {
-        var right = x.GetRulePart(RulePart.Right);
-        foreach(var z in right)
+        var right = x.GetRulePart(RulePart.Right); 
+        foreach(var z in right.GetChainSymbols())
           {
           var union = First(z);
           ret.UnionWith(union);

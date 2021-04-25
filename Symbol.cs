@@ -10,10 +10,8 @@ namespace LR_1
     NotTerminal,
     }
 
-  abstract class Symbol<SelfType> : ICloneable where SelfType : Symbol<SelfType>//, new()
+  abstract class Symbol<SelfType> : ICloneable where SelfType : Symbol<SelfType>
     {
-    //protected static SelfType ForStaticCall = new SelfType();
-
     public bool isEpsilon => GetSymbolType() == SymbolType.Epsilon;
     public bool isTerminal => GetSymbolType() == SymbolType.Terminal;
     public bool isNotTerminal => GetSymbolType() == SymbolType.NotTerminal;

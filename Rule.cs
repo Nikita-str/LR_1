@@ -10,62 +10,43 @@ namespace LR_1
     Right
     }
 
-  class Rule<S> where S : Symbol<S>//, new()
+  class Rule<S> where S : Symbol<S>
     {
-    private List<S> left;
-    private List<S> right;
+    private Chain<S> left;
+    private Chain<S> right;
 
     /// <summary>only for read</summary>
-    public List<S> GetRulePart(RulePart rule_part) => (rule_part == RulePart.Left) ? left : right;
+    public Chain<S> GetRulePart(RulePart rule_part) => (rule_part == RulePart.Left) ? left : right;
 
-    public int GetRuleLen(RulePart rule_part) => (rule_part == RulePart.Left) ? left.Count : right.Count;
-    public S GetSymbol(RulePart rule_part, int ind)
-      {
-      var r_part = (rule_part == RulePart.Left) ? left : right;
-      if(ind < 0 || r_part.Count <= ind) throw new IndexOutOfRangeException("index must be in [0; GetRuleLen(rule_part))");
-      return r_part[ind].Clone() as S;
-      }
+    public int GetRuleLen(RulePart rule_part) => (rule_part == RulePart.Left) ? left.Length : right.Length;
+    public S GetSymbol(RulePart rule_part, int ind) => GetRulePart(rule_part)[ind];
 
     /// <summary>Rarely used</summary>
     /// <param name="ind">index before adding symbol</param>
-    public void AddSymbol(int ind, S symbol, RulePart rule_part = RulePart.Right)
-      {
-      var r_part = (rule_part == RulePart.Left) ? left : right;
-      if(ind < 0 || r_part.Count < ind) throw new IndexOutOfRangeException("index must be in [0; GetRuleLen(rule_part)]");
-      if(ind == r_part.Count) r_part.Add(symbol);
-      else r_part.Insert(ind, symbol);
-      }
+    public void AddSymbol(int ind, S symbol, RulePart rule_part = RulePart.Right) => GetRulePart(rule_part).AddSymbol(ind, symbol);
 
     public Rule(List<S> left, List<S> right, bool take_owning = true)
       {
-      if(take_owning)
-        {
-        this.left = left;
-        this.right = right;
-        }
-      else
-        {
-        this.left = new List<S>(left);
-        this.right = new List<S>(right);
-        }
+      this.left = new Chain<S>(left, take_owning);
+      this.right = new Chain<S>(right, take_owning);
       }
 
     public Rule(Rule<S> copy)
       {
-      left = new List<S>(copy.left);
-      right = new List<S>(copy.right);
+      left = new Chain<S>(copy.left);
+      right = new Chain<S>(copy.right);
       }
 
     public override int GetHashCode()
       {
-      int ret = left.Count * 131 + right.Count * 2;
-      for(int i = 0; i < left.Count && i < 2; i++) ret ^= (i + 1) * (i + 1) * left[i].GetHashCode();
-      for(int i = 0; i < right.Count && i < 4; i++) ret ^= (i + 1) * (i + 1) * right[i].GetHashCode();
+      int ret = left.Length * 131 + right.Length * 2;
+      ret ^= left.GetHashCode(2);
+      ret ^= right.GetHashCode(4);
       return ret;
       }
     }
 
-  class RuleComparer<S> : IEqualityComparer<Rule<S>> where S : Symbol<S>///, new()
+  class RuleComparer<S> : IEqualityComparer<Rule<S>> where S : Symbol<S>
     {
     IEqualityComparer<S> symbol_comparator;
     public RuleComparer(IEqualityComparer<S> s_comparator)
