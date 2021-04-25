@@ -38,6 +38,7 @@ namespace LR_1
       Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
 
       G = new Grammar<CharSymbol>(null);
+      G.SetStartSymbol('Z');
       G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'Z' }, new List<CharSymbol>() { 'S' }));
       G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'S' }, new List<CharSymbol>() { 'A', 'A' }));
       G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'A' }, new List<CharSymbol>() { 'a', 'A' }));
@@ -49,7 +50,16 @@ namespace LR_1
       var res_closure = G.Closure(set);
       Console.WriteLine("is: ");
       foreach(var x in res_closure) Console.WriteLine(x);
-
+      Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
+      var items = G.Items();
+      int index = 0;
+      foreach(var I in items)
+        {
+        Console.WriteLine("I_" + index++ +": ");
+        foreach(var closure in I)
+          Console.WriteLine("   " + closure);
+        }
+      
       Console.ReadKey();
       }
     }

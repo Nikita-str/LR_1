@@ -6,7 +6,7 @@ namespace LR_1
   {
   class Grammar<S> where S : Symbol<S>, new()
     {
-    public IEqualityComparer<S> symbol_comparator { get => chain_comparator.symbol_comparator;  }
+    public IEqualityComparer<S> symbol_comparator { get => chain_comparator.symbol_comparator; }
     public ChainComparer<S> chain_comparator { get => rule_comparator.chain_comparer; }
     public RuleComparer<S> rule_comparator { get; private set; }
 
@@ -17,7 +17,19 @@ namespace LR_1
     /// <summary>Not terminal symbols</summary>
     HashSet<S> N;
 
+
+    public HashSet<S> GetAllGrammarSymbol()
+      {
+      var ret = new HashSet<S>(symbol_comparator);
+      ret.Add(EndSymbol);
+      ret.UnionWith(T);
+      ret.UnionWith(N);
+      return ret;
+      }
+
     public S StartSymbol { get; set; } = null;
+    public void SetStartSymbol(S new_start_symbol) => StartSymbol = new_start_symbol;
+
     /// <summary>special symbol for end of string</summary>
     public S EndSymbol { get; } = Symbol<S>.GetSpecialSymbol(0);
 
@@ -115,7 +127,61 @@ namespace LR_1
 
     public HashSet<ClosureElem<S>> Goto(HashSet<ClosureElem<S>> items, Symbol<S> symbol)
       {
-      throw new Exception();
+      var for_ret = new HashSet<ClosureElem<S>>();
+      foreach(var closure in items)
+        {
+        if(!symbol_comparator.Equals(closure.SymbolAfterPoint, symbol as S)) continue; 
+        for_ret.Add(new ClosureElem<S>(closure.rule, closure.position + 1, closure.symbol, symbol_comparator));
+        }
+      return Closure(for_ret);
+      }
+
+    /// <summary>Grammar must be already added with S'->S where S is previos start symbol</summary>
+    /// <returns></returns>
+    public List<HashSet<ClosureElem<S>>> Items()
+      {
+      var must_have_len_eq_1 = GetWithLeft(StartSymbol);
+      if(must_have_len_eq_1.Count() != 1) throw new ArgumentException("self must be adding with S'->S where S is preious start subol and S' new");
+      var start_rule = must_have_len_eq_1.First();
+      var I_0 = Closure(new HashSet<ClosureElem<S>>() { new ClosureElem<S>(start_rule, 0, EndSymbol, symbol_comparator) });
+
+      var all_grammar_symbol = GetAllGrammarSymbol();
+      all_grammar_symbol.Remove(StartSymbol); // S' is additional not initially
+
+      var ret = new List<HashSet<ClosureElem<S>>>() { I_0 };
+      while(true)
+        {
+        int last_len = ret.Count;
+        var added = new List<HashSet<ClosureElem<S>>>();
+        foreach(var I in ret)
+          foreach(var X in all_grammar_symbol)
+            {
+            var added_I = Goto(I, X);
+            if(added_I.Count != 0)
+              {
+              bool add = true;
+
+              #region oh.. no... check that added_I not contain in ret
+              foreach(var exist_I in ret)
+                {
+                bool is_eq = true;
+                foreach(var item in exist_I)
+                  {
+                  if(!added_I.Contains(item)) is_eq = false;
+                  if(is_eq) break;
+                  }
+                if(is_eq) add = false;
+                if(!add) break;
+                }
+              #endregion
+              if(add) added.Add(added_I);
+              }
+            }
+
+        ret.AddRange(added);
+        if(ret.Count == last_len) break;
+        }
+      return ret;
       }
 
     }

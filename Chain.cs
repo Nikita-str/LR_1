@@ -18,7 +18,8 @@ namespace LR_1
       {
       get
         {
-        if(index < 0 || chain.Count <= index) throw new IndexOutOfRangeException("index must be in [0; GetRuleLen(rule_part))");
+        if(chain.Count <= index) return Symbol<S>.Epsilon;
+        if(index < 0) throw new IndexOutOfRangeException("index must be in [0; GetRuleLen(rule_part))");
         return chain[index].Clone() as S;
         }
       }
