@@ -148,14 +148,13 @@ namespace LR_1
       /// <summary> [Key: (from, to); Value: by symbol] </summary>
       public Dictionary<(int, int), S> transitions;
       public List<HashSet<ClosureElem<S>>> items;
-      public Dictionary<S, int> all_NT_symbols;
+      public ItemsInfo items_info;
 
-      public ItemsReturn(List<HashSet<ClosureElem<S>>> _items, Dictionary<(int, int), S> _transitions, List<S> all_NT)
+      public ItemsReturn(List<HashSet<ClosureElem<S>>> _items, Dictionary<(int, int), S> _transitions, ItemsInfo i_info)
         {
         items = _items;
         transitions = _transitions;
-        all_NT_symbols = new Dictionary<S, int>();
-        for(int i = 0; i < all_NT.Count; i++) all_NT_symbols.Add(all_NT[i], i);
+        items_info = i_info;
         }
 
       public void PrintTransitions(int tab_sz = 3)
@@ -179,12 +178,13 @@ namespace LR_1
 
       public void PrintGotoTable()
         {
-        int symbols = all_NT_symbols.Count;
+        var all_N = items_info.all_NT_symbols;
+        int symbols = all_N.Count;
 
         Console.WriteLine("GOTO:");
         int max_len = 3;
         Dictionary<int, string> nt_strings = new Dictionary<int, string>();
-        foreach(var c in all_NT_symbols)
+        foreach(var c in all_N)
           {
           var cur = c.Key.ToString();
           nt_strings.Add(c.Value, cur);
@@ -195,10 +195,10 @@ namespace LR_1
         Console.Write(new string(' ', len_cell) + "|");
         for(int i = 0; i < symbols; i++) Console.Write(" " + nt_strings[i].PadRight(len_cell - 1) + "|");
         Console.WriteLine();
-
+        Console.WriteLine("".PadLeft((len_cell + 1) * (symbols + 1), '-'));
         var table = new int[items.Count, symbols];
         foreach(var x in transitions)
-          if(x.Value.isNotTerminal)table[x.Key.Item1, all_NT_symbols[x.Value]] = x.Key.Item2 + 1;
+          if(x.Value.isNotTerminal)table[x.Key.Item1, all_N[x.Value]] = x.Key.Item2 + 1;
 
         for(int i = 0; i < items.Count; i++)
           {
@@ -207,21 +207,30 @@ namespace LR_1
           Console.WriteLine();
           }
         }
+
+      public void PrintActionTable()
+        {
+        Console.WriteLine("Action:");
+
+        }
       }
 
-    public class GotoTable
+    public class ItemsInfo
       {
-      public ItemsReturn closure_keeper;
-      public List<S> all_NT_symbols;
-      public Dictionary<(int, S), int> table;
-      public GotoTable(ItemsReturn parent, List<S> all_NT)
+      public S StartS;
+      public S BackStartS;
+      public Dictionary<S, int> all_NT_symbols;
+      public Dictionary<S, int> all_T_symbols;
+
+      public ItemsInfo(List<S> all_NT, List<S> all_T, S start_cur, S start_prev)
         {
-        foreach(var x in parent.transitions)
-          {
-
-          }
+        all_NT_symbols = new Dictionary<S, int>();
+        for(int i = 0; i < all_NT.Count; i++) all_NT_symbols.Add(all_NT[i], i);
+        all_T_symbols = new Dictionary<S, int>();
+        for(int i = 0; i < all_T.Count; i++) all_T_symbols.Add(all_T[i], i);
+        StartS = start_cur;
+        BackStartS = start_prev;
         }
-
       }
 
     static readonly Exception EXC_NotNormalized = new ArgumentException("self must be adding with S'->S where S is preious start subol and S' new");
@@ -235,6 +244,7 @@ namespace LR_1
       if(must_have_len_eq_1.Count() != 1) throw EXC_NotNormalized;
       var start_rule = must_have_len_eq_1.First();
       if(start_rule.GetRuleLen(RulePart.Left) != 1 || start_rule.GetRuleLen(RulePart.Right) != 1) throw EXC_NotNormalized;
+      var back_start_s = start_rule.GetSymbol(RulePart.Right, 0);
       #endregion check...
 
       var I_0 = Closure(new HashSet<ClosureElem<S>>() { new ClosureElem<S>(start_rule, 0, EndSymbol, symbol_comparator) });
@@ -297,13 +307,22 @@ namespace LR_1
         if(items.Count == last_len) break;
         }
 
-      #region create goto table
+      #region create items info
+      #region create N-symbols list
       var all_N = N.ToList();
       all_N.Remove(StartSymbol); // S' is additional and not initially
       if(comparer_for_sort != null) all_N.Sort(comparer_for_sort);
       #endregion
 
-      return new ItemsReturn(items, transitions, all_N);
+      #region create T-symbols list
+      var all_T = T.ToList();
+      if(comparer_for_sort != null) all_T.Sort(comparer_for_sort);
+      #endregion
+
+      var items_info = new ItemsInfo(all_N, all_T, StartSymbol, back_start_s);
+      #endregion
+
+      return new ItemsReturn(items, transitions, items_info);
       }
 
     }
