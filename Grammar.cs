@@ -67,6 +67,7 @@ namespace LR_1
       AddNotTerminal(r.GetRulePart(RulePart.Right).GetChainSymbols());
       }
 
+    public void AddRules(IEnumerable<Rule<S>> rules) { foreach(var x in rules) AddRule(x); }
     public bool AddRule(Rule<S> rule) => AddRule(rule, next_id);
     private bool AddRule(Rule<S> rule, int id)
       {
