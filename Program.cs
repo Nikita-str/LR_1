@@ -68,7 +68,11 @@ namespace LR_1
       items.PrintTransitions();
       Console.WriteLine("\nItems:");
       items.PrintItems();
+      Console.WriteLine();
       items.PrintGotoTable();
+      Console.WriteLine();
+      items.PrintActionTable();
+
       //TODO: special symbols are Terminal ... 
 
       Console.ReadKey();

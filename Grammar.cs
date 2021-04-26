@@ -12,9 +12,10 @@ namespace LR_1
 
     HashSet<Rule<S>> rules;
 
-    int id = 0;
+    bool id_zero_used = false;
+    int id = 1;
     int next_id { get => id++; }
-    Dictionary<Rule<S>, int> rules_id = new Dictionary<Rule<S>, int>();
+    Dictionary<Rule<S>, int> rules_id;
 
     /// <summary>Terminal symbols</summary>
     HashSet<S> T;
@@ -42,12 +43,14 @@ namespace LR_1
 
     public Grammar(EqualityComparer<S> s_comparator)
       {
-      if (s_comparator == null) s_comparator = EqualityComparer<S>.Default;
+      if(s_comparator == null) s_comparator = EqualityComparer<S>.Default;
       rule_comparator = new RuleComparer<S>(s_comparator);
       rules = new HashSet<Rule<S>>(rule_comparator);
       T = new HashSet<S>(symbol_comparator);
       T.Add(EndSymbol);
       N = new HashSet<S>(symbol_comparator);
+
+      rules_id = new Dictionary<Rule<S>, int>(rule_comparator);
       }
 
     private void AddTerminal(IEnumerable<S> from) => T.UnionWith(from.Where(o => o.isTerminal));
@@ -128,7 +131,7 @@ namespace LR_1
           }
         if(items_clone.Count == items.Count) break;
         }
-      return items; 
+      return items;
       }
 
     public HashSet<ClosureElem<S>> Goto(HashSet<ClosureElem<S>> items, Symbol<S> symbol)
@@ -136,7 +139,7 @@ namespace LR_1
       var for_ret = new HashSet<ClosureElem<S>>();
       foreach(var closure in items)
         {
-        if(!symbol_comparator.Equals(closure.SymbolAfterPoint, symbol as S)) continue; 
+        if(!symbol_comparator.Equals(closure.SymbolAfterPoint, symbol as S)) continue;
         for_ret.Add(new ClosureElem<S>(closure.rule, closure.position + 1, closure.symbol, symbol_comparator));
         }
       return Closure(for_ret);
@@ -146,11 +149,11 @@ namespace LR_1
     public class ItemsReturn
       {
       /// <summary> [Key: (from, to); Value: by symbol] </summary>
-      public Dictionary<(int, int), S> transitions;
-      public List<HashSet<ClosureElem<S>>> items;
-      public ItemsInfo items_info;
+      Dictionary<(int, int), S> transitions;
+      List<HashSet<ClosureElem<S>>> items;
+      ItemsInfo items_info;
 
-      public ItemsReturn(List<HashSet<ClosureElem<S>>> _items, Dictionary<(int, int), S> _transitions, ItemsInfo i_info)
+      internal ItemsReturn(List<HashSet<ClosureElem<S>>> _items, Dictionary<(int, int), S> _transitions, ItemsInfo i_info)
         {
         items = _items;
         transitions = _transitions;
@@ -167,13 +170,24 @@ namespace LR_1
       public void PrintItems(int tab_sz = 3)
         {
         string tab = new string(' ', tab_sz);
-        int index = 0; 
+        int index = 0;
         foreach(var I in items)
           {
           Console.WriteLine("I[" + index++ + "]: ");
           foreach(var closure in I)
             Console.WriteLine(tab + closure);
           }
+        }
+
+      private int[,] GetGotoTable(Dictionary<S, int> symbols, bool Terminal)
+        {
+        int s_amount = symbols.Count;
+
+        var table = new int[items.Count, s_amount];
+        foreach(var x in transitions) 
+          if((!Terminal && x.Value.isNotTerminal) || (Terminal && x.Value.isTerminal)) 
+            table[x.Key.Item1, symbols[x.Value]] = x.Key.Item2 + 1; // it seems like 0 cant be here, but i dont sure, so +1 for case if x.Key.I2 = 0;
+        return table;
         }
 
       public void PrintGotoTable()
@@ -190,46 +204,109 @@ namespace LR_1
           nt_strings.Add(c.Value, cur);
           if(max_len < cur.Length) max_len = cur.Length;
           }
-        
-        var len_cell = max_len + 2; 
+
+        var len_cell = max_len + 2;
         Console.Write(new string(' ', len_cell) + "|");
         for(int i = 0; i < symbols; i++) Console.Write(" " + nt_strings[i].PadRight(len_cell - 1) + "|");
         Console.WriteLine();
         Console.WriteLine("".PadLeft((len_cell + 1) * (symbols + 1), '-'));
-        var table = new int[items.Count, symbols];
-        foreach(var x in transitions)
-          if(x.Value.isNotTerminal)table[x.Key.Item1, all_N[x.Value]] = x.Key.Item2 + 1;
+
+        var table = GetGotoTable(all_N, false);
 
         for(int i = 0; i < items.Count; i++)
           {
-          Console.Write((" "+i).PadRight(len_cell) + "|");
-          for(int j = 0; j < symbols; j++) Console.Write( " " + ( table[i, j] == 0 ? "" : ""+(table[i,j] - 1) ).PadRight(len_cell - 1) + "|");
+          Console.Write((" " + i).PadRight(len_cell) + "|");
+          for(int j = 0; j < symbols; j++) Console.Write(" " + (table[i, j] == 0 ? "" : "" + (table[i, j] - 1)).PadRight(len_cell - 1) + "|");
           Console.WriteLine();
           }
         }
 
+      private enum ActionType { Nothing = 0, Shift, Reduce, Accept }
+
       public void PrintActionTable()
         {
-        Console.WriteLine("Action:");
+        var all_T = items_info.all_T_symbols;
+        int t_symb_amount = all_T.Count;
 
+        Console.WriteLine("Action:");
+        int max_len = 3;
+        Dictionary<int, string> t_strings = new Dictionary<int, string>();
+        foreach(var c in all_T)
+          {
+          var cur = c.Key.ToString();
+          t_strings.Add(c.Value, cur);
+          if(max_len < cur.Length) max_len = cur.Length;
+          }
+
+        var len_cell = max_len + 2;
+        Console.Write(new string(' ', len_cell) + "|");
+        for(int i = 0; i < t_symb_amount; i++) Console.Write(" " + t_strings[i].PadRight(len_cell - 1) + "|");
+        Console.WriteLine();
+        Console.WriteLine("".PadLeft((len_cell + 1) * (t_symb_amount + 1), '-'));
+
+        var goto_table = GetGotoTable(all_T, true);
+
+        var table = new (ActionType, int)[items.Count, t_symb_amount];
+        for(int i = 0; i < items.Count; i++)
+          {
+          var cur_item = items[i];
+          foreach(var closure in cur_item)
+            {
+            var a = closure.SymbolAfterPoint;
+            if(a.isEpsilon)
+              {
+              if(items_info.IsAcceptRule(closure.rule)) table[i, all_T[closure.symbol]] = (ActionType.Accept, 0);
+              else table[i, all_T[closure.symbol]] = (ActionType.Reduce, items_info.GetIdOfRule(closure.rule));
+              continue;
+              }
+            if(!a.isTerminal) continue;
+            var j = goto_table[i, all_T[a]];
+            if(a.isTerminal && j != 0) table[i, all_T[a]] = (ActionType.Shift, j - 1); //-1 cause in GetGotoTable I add 1
+            }
+          }
+
+        for(int i = 0; i < items.Count; i++)
+          {
+          Console.Write((" " + i).PadRight(len_cell) + "|");
+          for(int j = 0; j < t_symb_amount; j++)
+            {
+            var x = table[i, j];
+            string ss = "";
+            switch(x.Item1)
+              {
+              case ActionType.Accept: ss = "ACC"; break;
+              case ActionType.Shift: ss = "s"+x.Item2; break;
+              case ActionType.Reduce: ss = "r" + x.Item2; break;
+              } 
+            Console.Write(" " + (ss).PadRight(len_cell - 1) + "|");
+            }
+          Console.WriteLine();
+          }
         }
+
       }
 
-    public class ItemsInfo
+    internal class ItemsInfo
       {
-      public S StartS;
-      public S BackStartS;
-      public Dictionary<S, int> all_NT_symbols;
-      public Dictionary<S, int> all_T_symbols;
+      public Dictionary<S, int> all_NT_symbols { get; }
+      public Dictionary<S, int> all_T_symbols { get; }
+      Rule<S> S_to_S;
+      RuleComparer<S> r_comparer;
+      Dictionary<Rule<S>, int> rules_id;
 
-      public ItemsInfo(List<S> all_NT, List<S> all_T, S start_cur, S start_prev)
+      public bool IsAcceptRule(Rule<S> rule) => r_comparer.Equals(S_to_S, rule);
+      public int GetIdOfRule(Rule<S> rule) => rules_id[rule];
+
+      public ItemsInfo(List<S> all_NT, List<S> all_T, Rule<S> new_start_to_back_start, RuleComparer<S> _r_comparer, Dictionary<Rule<S>, int> _rules_id)
         {
-        all_NT_symbols = new Dictionary<S, int>();
+        r_comparer = _r_comparer;
+        S_to_S = new_start_to_back_start;
+        rules_id = _rules_id;
+
+        all_NT_symbols = new Dictionary<S, int>(r_comparer.chain_comparer.symbol_comparator);
         for(int i = 0; i < all_NT.Count; i++) all_NT_symbols.Add(all_NT[i], i);
-        all_T_symbols = new Dictionary<S, int>();
+        all_T_symbols = new Dictionary<S, int>(r_comparer.chain_comparer.symbol_comparator);
         for(int i = 0; i < all_T.Count; i++) all_T_symbols.Add(all_T[i], i);
-        StartS = start_cur;
-        BackStartS = start_prev;
         }
       }
 
@@ -258,7 +335,7 @@ namespace LR_1
 
       var transitions = new Dictionary<(int, int), S>() { };// <(from, to), by symbol> 
       var items = new List<HashSet<ClosureElem<S>>>() { I_0 };
-      
+
       while(true)
         {
         int last_len = items.Count;
@@ -286,7 +363,7 @@ namespace LR_1
                 if(is_eq)
                   {
                   var from_to = (i, exist_i);
-                  if(transitions.ContainsKey(from_to)) {if(!symbol_comparator.Equals(transitions[from_to], X)) throw new Exception("... blin");}
+                  if(transitions.ContainsKey(from_to)) { if(!symbol_comparator.Equals(transitions[from_to], X)) throw new Exception("... blin"); }
                   else transitions.Add(from_to, X); // from: I[i] to I[last_len + added.Count] by X-symbol
                   add = false;
                   }
@@ -319,12 +396,24 @@ namespace LR_1
       if(comparer_for_sort != null) all_T.Sort(comparer_for_sort);
       #endregion
 
-      var items_info = new ItemsInfo(all_N, all_T, StartSymbol, back_start_s);
+      var items_info = new ItemsInfo(all_N, all_T, start_rule, rule_comparator, rules_id);
       #endregion
 
       return new ItemsReturn(items, transitions, items_info);
       }
 
-    }
+    public void PrintGramar(bool with_id)
+      {
+      if(with_id)
+        {
 
+        }
+      else
+        {
+        Console.WriteLine("Start symbol: " + StartSymbol);
+        foreach(var r in rules) Console.WriteLine(r);
+        }
+      }
+
+    }
   }
