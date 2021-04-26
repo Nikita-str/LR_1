@@ -22,7 +22,7 @@ namespace LR_1
       items.PrintActionTable();
 
       Console.WriteLine("\n Rules:");
-      G.PrintGramar(true);
+      G.PrintGrammar(true);
 
       Console.ReadKey();
       }
@@ -125,12 +125,33 @@ namespace LR_1
       Print__LR_1(G, SS_Comparison);
       }
 
+    static void Test_3(bool use_ss)
+      {
+      if(use_ss)
+        {
+        var G = new Grammar<StringSymbol>(null);
+        G.SetStartSymbol('S');
+        G.AddRules(GetRyleSS("S -> S a S b"));
+        G.NormalizedForItems();
+        Print__LR_1(G, SS_Comparison);
+        }
+      else
+        {
+        var G = new Grammar<CharSymbol>(null);
+        G.SetStartSymbol('S');
+        G.AddRules(GetRyleCS("S -> SaSb | ~"));
+        G.NormalizedForItems();
+        Print__LR_1(G, CS_Comparison);
+        }
+      }
+
     static void Main(string[] args)
       {
       //choose your fighter
-      Test(false);
+      //Test(false);
       //Test(true);
       //Test_2();
+      Test_3(false);
       Console.ReadKey();
       }
     }

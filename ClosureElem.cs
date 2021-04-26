@@ -46,10 +46,15 @@ namespace LR_1
       {
       var right = "";
       var r_part_len = rule.GetRuleLen(RulePart.Right);
-      for(int i = 0; i < r_part_len; i++)
+      if(r_part_len == 1 && rule.GetSymbol(RulePart.Right, 0).isEpsilon) right = ".";
+      else
         {
-        if(position == i) right += ".";
-        right += rule.GetSymbol(RulePart.Right, i).ToString();
+        for(int i = 0; i < r_part_len; i++)
+          {
+          if(position == i) right += ".";
+          right += rule.GetSymbol(RulePart.Right, i).ToString();
+          }
+        if(position == r_part_len) right += ".";
         }
       return "[" + rule.GetRulePart(RulePart.Left) + " -> " + right + "; " + symbol + "]";
       }

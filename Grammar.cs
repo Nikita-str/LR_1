@@ -418,7 +418,7 @@ namespace LR_1
       SetStartSymbol(new_start);
       }
 
-    public void PrintGramar(bool with_id)
+    public void PrintGrammar(bool with_id)
       {
       if(with_id)
         {
