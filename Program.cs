@@ -38,19 +38,11 @@ namespace LR_1
       Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
 
       G = new Grammar<CharSymbol>(null);
-      G.SetStartSymbol('Z');
-      G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'Z' }, new List<CharSymbol>() { 'S' }));
+      G.SetStartSymbol('S');
       G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'S' }, new List<CharSymbol>() { 'A', 'A' }));
       G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'A' }, new List<CharSymbol>() { 'a', 'A' }));
       G.AddRule(new Rule<CharSymbol>(new List<CharSymbol>() { 'A' }, new List<CharSymbol>() { 'b' }));
-
-      var first_closure = new ClosureElem<CharSymbol>(G.GetWithLeft((CharSymbol)'Z').First(), 0, G.EndSymbol, G.symbol_comparator);
-      Console.WriteLine("closure for: " + first_closure);
-      var set = new HashSet<ClosureElem<CharSymbol>>() { first_closure };
-      var res_closure = G.Closure(set);
-      Console.WriteLine("is: ");
-      foreach(var x in res_closure) Console.WriteLine(x);
-      Console.WriteLine("---    ---    ---    ---    ---    ---    ---    ---    ---");
+      G.NormalizedForItems();
 
       Comparison<CharSymbol> items_comparision = (xc, yc) =>
         {
@@ -72,6 +64,9 @@ namespace LR_1
       items.PrintGotoTable();
       Console.WriteLine();
       items.PrintActionTable();
+
+      Console.WriteLine("\n Rules:");
+      G.PrintGramar(true);
 
       //TODO: special symbols are Terminal ... 
 

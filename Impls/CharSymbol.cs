@@ -46,13 +46,23 @@ namespace LR_1.Impls
           }
         case SymbolType.NotTerminal:
           {
+          if(gen_symb_info != null && gen_symb_info is StdGenSymbolInfo std && std.wanted_prefix == "S")
+            {
+            CharSymbol cs = null;
+            cs = new CharSymbol('S');
+            if(!already_used.Contains(cs)) return cs;
+            cs = new CharSymbol('Z');
+            if(!already_used.Contains(cs)) return cs;
+            cs = new CharSymbol('X');
+            if(!already_used.Contains(cs)) return cs;
+            }
           var letters_amount = 'Z' - 'A' + 1;
           var eng_letters = new bool[letters_amount];
           foreach(var x in already_used)
             {
-            if('a' <= x.Value && x.Value <= 'z') eng_letters[x.Value - 'a'] = true;
+            if('A' <= x.Value && x.Value <= 'Z') eng_letters[x.Value - 'A'] = true;
             }
-          for(int i = 0; i < letters_amount; i++) if(!eng_letters[i]) return new CharSymbol((char)('a' + i));
+          for(int i = 0; i < letters_amount; i++) if(!eng_letters[i]) return new CharSymbol((char)('A' + i));
           throw new NotImplementedException("cant create not used symbol");
           }
         default: throw new NotImplementedException("wanted_type is not Eps, N, T ?!");

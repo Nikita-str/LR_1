@@ -25,9 +25,9 @@ namespace LR_1
     public static SelfType Epsilon => ForStaticCall.GenerateNew(null, SymbolType.Epsilon);
     
     /// <summary>for special symbol</summary>
-    public static SelfType GenerateNewTerminal(List<SelfType> already_used, Base_GenSymbolInfo gen_symb_info)
+    public static SelfType GenerateNewTerminal(IEnumerable<SelfType> already_used, Base_GenSymbolInfo gen_symb_info)
       => ForStaticCall.GenerateNew(already_used, SymbolType.Terminal, gen_symb_info);
-    public static SelfType GenerateNewNotTerminal(List<SelfType> already_used, Base_GenSymbolInfo gen_symb_info)
+    public static SelfType GenerateNewNotTerminal(IEnumerable<SelfType> already_used, Base_GenSymbolInfo gen_symb_info)
       => ForStaticCall.GenerateNew(already_used, SymbolType.NotTerminal, gen_symb_info);
     
     /// <summary>Generate new symbol of wanted type. for Start and Epsilon just return them(cause they is uniq)

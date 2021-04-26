@@ -67,10 +67,11 @@ namespace LR_1
       AddNotTerminal(r.GetRulePart(RulePart.Right).GetChainSymbols());
       }
 
-    public bool AddRule(Rule<S> rule)
+    public bool AddRule(Rule<S> rule) => AddRule(rule, next_id);
+    private bool AddRule(Rule<S> rule, int id)
       {
       if(!rules.Add(rule)) return false;
-      rules_id.Add(rule, next_id);
+      rules_id.Add(rule, id);
       if(rule.GetRuleLen(RulePart.Left) != 1) amount_not_CF_left++;
       if(!rule.GetSymbol(RulePart.Left, 0).isNotTerminal) amount_not_CF_left++;
       AddTerminal(rule);
@@ -402,11 +403,27 @@ namespace LR_1
       return new ItemsReturn(items, transitions, items_info);
       }
 
+    public void NormalizedForItems()
+      {
+      if(StartSymbol == null) throw new Exception("grammar must have start symbol");
+      var new_start = Symbol<S>.GenerateNewNotTerminal(this.GetAllGrammarSymbol(), new StdGenSymbolInfo(StartSymbol.ToString(), false));
+      var add_rule = new Rule<S>(new_start, StartSymbol);
+      if(!id_zero_used)
+        {
+        id_zero_used = true;
+        AddRule(add_rule, 0);
+        }
+      else AddRule(add_rule);
+      SetStartSymbol(new_start);
+      }
+
     public void PrintGramar(bool with_id)
       {
       if(with_id)
         {
-
+        var r_sorted_by_id = new SortedDictionary<int, Rule<S>>();
+        foreach(var x in rules_id) r_sorted_by_id.Add(x.Value, x.Key);
+        foreach(var x in r_sorted_by_id) Console.WriteLine((x.Key + "").PadLeft(3) + "|" + x.Value); 
         }
       else
         {
