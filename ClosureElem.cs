@@ -42,7 +42,16 @@ namespace LR_1
 
     public override int GetHashCode() => (rule.GetHashCode() + position * 17) ^ (symbol.GetHashCode() << 1);
 
-    public override string ToString() 
-      => "[" + rule.GetRulePart(RulePart.Left) + " -> " + rule.GetRulePart(RulePart.Right).ToString().Insert(position, ".") + "; " + symbol + "]";
+    public override string ToString()
+      {
+      var right = "";
+      var r_part_len = rule.GetRuleLen(RulePart.Right);
+      for(int i = 0; i < r_part_len; i++)
+        {
+        if(position == i) right += ".";
+        right += rule.GetSymbol(RulePart.Right, i).ToString();
+        }
+      return "[" + rule.GetRulePart(RulePart.Left) + " -> " + right + "; " + symbol + "]";
+      }
     }
   }

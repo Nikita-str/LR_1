@@ -114,9 +114,23 @@ namespace LR_1
         }
       }
 
+    static void Test_2()
+      {
+      var G = new Grammar<StringSymbol>(null);
+      G.SetStartSymbol('E');
+      G.AddRules(GetRyleSS("E -> E plus T | T"));
+      G.AddRules(GetRyleSS("T -> T mul F | F"));
+      G.AddRules(GetRyleSS("F ->id"));
+      G.NormalizedForItems();
+      Print__LR_1(G, SS_Comparison);
+      }
+
     static void Main(string[] args)
       {
-      Test(true);
+      //choose your fighter
+      Test(false);
+      //Test(true);
+      //Test_2();
       Console.ReadKey();
       }
     }
